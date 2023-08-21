@@ -1,0 +1,434 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model access {
+  id                           String          @id @unique
+  accessProfileId              String          @unique
+  fees                         Boolean?        @default(false)
+  documents                    Boolean?        @default(false)
+  assemblies                   Boolean?        @default(false)
+  occurrences                  Boolean?        @default(false)
+  paymentMethods               Boolean?        @default(false)
+  reservations                 Boolean?        @default(false)
+  visitors                     Boolean?        @default(false)
+  accountability               Boolean?        @default(false)
+  accountabilityClosingDate    DateTime?
+  accountabilityNumberOfMonths Int?            @default(0)
+  accountabilityCustomConfig   Json?
+  insuranceServices            Boolean?        @default(false)
+  consumptions                 Boolean?        @default(false)
+  waterSupplyInterruption      Boolean?        @default(false)
+  ownConsumptions              Boolean?        @default(false)
+  expenses                     Boolean?        @default(false)
+  notices                      Boolean?        @default(false)
+  bankTransactions             Boolean?        @default(false)
+  bankAccounts                 Boolean?        @default(false)
+  customAccess                 Json?
+  createdAt                    DateTime        @default(now()) @db.Timestamp(3)
+  updatedAt                    DateTime        @db.Timestamp(3)
+  clientId                     access_clientId
+  administrationAccess         Json?
+  accessControl                Boolean?        @default(false)
+  cashFlow                     Boolean?        @default(false)
+  listOfRelease                Boolean?        @default(false)
+  access_profile               access_profile  @relation(fields: [accessProfileId], references: [id], onDelete: Cascade)
+}
+
+model access_profile {
+  id                         String                       @id @unique
+  clientId                   access_profile_clientId
+  ownerType                  access_profile_ownerType
+  ownerId                    String
+  name                       String
+  description                String?
+  activated                  Boolean                      @default(true)
+  createdAt                  DateTime                     @default(now()) @db.Timestamp(3)
+  updatedAt                  DateTime                     @db.Timestamp(3)
+  access                     access?
+  entity_access_profile      entity_access_profile?
+  entity_type_access_profile entity_type_access_profile[]
+
+  @@unique([ownerId, ownerType, name])
+  @@index([ownerType, ownerId])
+}
+
+model administration_contacts {
+  id           String                               @id @unique
+  type         administration_contacts_type
+  value        String
+  typeExternal administration_contacts_typeExternal
+  externalId   String
+
+  @@index([typeExternal, externalId])
+}
+
+model administrator {
+  id                    String                 @id @unique
+  externalId            String
+  companyId             Int?                   @unique
+  configUrl             String?
+  configUrl2            String?
+  condoUrl              String?
+  condoUrl2             String?
+  name                  String
+  cnpj                  String                 @unique
+  licenseIdentification String?
+  user                  String?
+  password              String?
+  key                   String?
+  addressStreet         String                 @db.VarChar(300)
+  addressNumber         String                 @db.VarChar(9)
+  addressComplement     String?                @db.VarChar(350)
+  addressDistrict       String                 @db.VarChar(150)
+  addressCity           String                 @db.VarChar(100)
+  addressState          String                 @db.VarChar(30)
+  addressZipcode        String                 @db.VarChar(10)
+  addressCountry        String?                @db.VarChar(30)
+  linkedin              String?
+  additionalInformation String?
+  facebook              String?
+  site                  String?
+  headAdministratorId   String?
+  isActive              Boolean                @default(true)
+  createdAt             DateTime               @default(now()) @db.Timestamp(3)
+  updatedAt             DateTime               @db.Timestamp(3)
+  syncGruvi             Boolean?
+  logo                  String?
+  clientId              administrator_clientId
+  condominium           condominium[]
+
+  @@unique([clientId, externalId])
+}
+
+model blocks {
+  id            String      @id @unique
+  name          String
+  description   String?
+  condominiumId String
+  condominium   condominium @relation(fields: [condominiumId], references: [id], onDelete: Cascade)
+  unity         unity[]
+
+  @@index([condominiumId], map: "blocks_condominiumId_fkey")
+}
+
+model condominium {
+  id                      String               @id @unique
+  externalId              String
+  companyId               Int?                 @unique
+  name                    String
+  addressStreet           String               @db.VarChar(300)
+  addressNumber           String               @db.VarChar(9)
+  addressComplement       String?              @db.VarChar(350)
+  addressDistrict         String               @db.VarChar(150)
+  addressCity             String               @db.VarChar(100)
+  addressState            String               @db.VarChar(2)
+  addressZipcode          String               @db.VarChar(10)
+  addressCountry          String?              @db.VarChar(30)
+  additionalInformation   String?
+  cnpj                    String?
+  linkedin                String?
+  facebook                String?
+  site                    String?
+  logo                    String?
+  isActive                Boolean              @default(true)
+  createdAt               DateTime             @default(now()) @db.Timestamp(3)
+  administratorId         String
+  updatedAt               DateTime             @db.Timestamp(3)
+  administrationStartDate DateTime?
+  syncGruvi               Boolean?
+  clientId                condominium_clientId
+  timezone                String               @default("America/Sao_Paulo") @db.VarChar(35)
+  extraData               String?
+  blocks                  blocks[]
+  administrator           administrator        @relation(fields: [administratorId], references: [id], onDelete: Cascade)
+  unity                   unity[]
+
+  @@unique([clientId, externalId])
+  @@index([administratorId], map: "condominium_administratorId_fkey")
+}
+
+model entity_access_profile {
+  id              String                           @id @unique
+  accessProfileId String                           @unique
+  entityType      entity_access_profile_entityType
+  entityId        String
+  createdAt       DateTime                         @default(now()) @db.Timestamp(3)
+  updatedAt       DateTime                         @db.Timestamp(3)
+  clientId        entity_access_profile_clientId
+  access_profile  access_profile                   @relation(fields: [accessProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([accessProfileId, entityType, entityId])
+  @@index([entityType, entityId])
+}
+
+model entity_type_access_profile {
+  id              String                                @id @unique
+  accessProfileId String
+  entityType      entity_type_access_profile_entityType
+  createdAt       DateTime                              @default(now()) @db.Timestamp(3)
+  updatedAt       DateTime                              @db.Timestamp(3)
+  clientId        entity_type_access_profile_clientId
+  access_profile  access_profile                        @relation(fields: [accessProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([accessProfileId, entityType])
+}
+
+model person_gruvi {
+  id                String                         @id @unique
+  personGruviId     Int
+  personGruviUuid   String
+  createdAt         DateTime                       @default(now()) @db.Timestamp(3)
+  updatedAt         DateTime                       @db.Timestamp(3)
+  documentOwnerId   String
+  documentOwnerType person_gruvi_documentOwnerType
+}
+
+model position {
+  id           String                @id @unique
+  name         String                @db.VarChar(100)
+  description  String?               @db.VarChar(256)
+  positionType position_positionType
+  activated    Boolean               @default(true)
+  createdAt    DateTime              @default(now()) @db.Timestamp(3)
+  updatedAt    DateTime              @db.Timestamp(3)
+  clientId     position_clientId
+  ownerId      String
+  ownerType    position_ownerType
+  staff        staff[]
+
+  @@unique([clientId, ownerId, ownerType, name])
+}
+
+model resident {
+  id                 String                       @id @unique
+  name               String
+  residentType       resident_residentType
+  residentPersonType resident_residentPersonType?
+  unityId            String
+  createdAt          DateTime                     @default(now()) @db.Timestamp(3)
+  updatedAt          DateTime                     @db.Timestamp(3)
+  clientId           resident_clientId
+  externalId         String
+  extraData          String?
+  unity              unity                        @relation(fields: [unityId], references: [id], onDelete: Cascade)
+  resident_document  resident_document[]
+
+  @@unique([clientId, externalId])
+  @@index([unityId], map: "resident_unityId_fkey")
+}
+
+model resident_document {
+  id         String                 @id @unique
+  type       resident_document_type
+  value      String
+  residentId String
+  createdAt  DateTime               @default(now()) @db.Timestamp(3)
+  updatedAt  DateTime               @db.Timestamp(3)
+  resident   resident               @relation(fields: [residentId], references: [id], onDelete: Cascade)
+
+  @@index([residentId], map: "resident_document_residentId_fkey")
+}
+
+model staff {
+  id                String           @id @unique
+  clientId          staff_clientId
+  positionId        String
+  name              String           @db.VarChar(255)
+  addressStreet     String?
+  addressNumber     String?
+  addressComplement String?
+  addressDistrict   String?
+  addressCity       String?
+  addressState      String?
+  addressZipcode    String?
+  addressCountry    String?
+  activated         Boolean          @default(true)
+  startAt           DateTime         @db.Timestamp(3)
+  finishAt          DateTime?        @db.Timestamp(3)
+  createdAt         DateTime         @default(now()) @db.Timestamp(3)
+  updatedAt         DateTime         @db.Timestamp(3)
+  externalId        String
+  ownerId           String
+  ownerType         staff_ownerType
+  position          position         @relation(fields: [positionId], references: [id])
+  staff_document    staff_document[]
+
+  @@unique([clientId, externalId, ownerId, ownerType])
+  @@index([ownerId, ownerType, startAt, finishAt])
+  @@index([positionId], map: "staff_positionId_fkey")
+}
+
+model staff_document {
+  id        String                  @id @unique
+  staffId   String
+  type      staff_document_type
+  value     String                  @db.VarChar(256)
+  createdAt DateTime                @default(now()) @db.Timestamp(3)
+  updatedAt DateTime                @db.Timestamp(3)
+  clientId  staff_document_clientId
+  staff     staff                   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, staffId, type, value])
+  @@index([staffId], map: "staff_document_staffId_fkey")
+  @@index([type, value])
+}
+
+model unity {
+  id                  String         @id @unique
+  externalId          String
+  condominiumId       String
+  blockId             String?
+  name                String
+  type                String
+  unityPrincipalBlock String?
+  unityPrincipal      String?
+  unityPrincipalType  String?
+  createdAt           DateTime       @default(now()) @db.Timestamp(3)
+  updatedAt           DateTime       @db.Timestamp(3)
+  isRent              Boolean
+  clientId            unity_clientId
+  extraData           String?
+  resident            resident[]
+  blocks              blocks?        @relation(fields: [blockId], references: [id])
+  condominium         condominium    @relation(fields: [condominiumId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, externalId])
+  @@index([blockId], map: "unity_blockId_fkey")
+  @@index([condominiumId], map: "unity_condominiumId_fkey")
+}
+
+enum access_profile_clientId {
+  ahreas
+  superlogica
+}
+
+enum administration_contacts_type {
+  EMAIL
+  MOBILE_NUMBER
+}
+
+enum resident_document_type {
+  EMAIL
+  MOBILE_NUMBER
+  CPF_CNPJ
+}
+
+enum staff_clientId {
+  ahreas
+  superlogica
+}
+
+enum access_profile_ownerType {
+  CONDOMINIUM
+  ADMINISTRATOR
+}
+
+enum entity_access_profile_entityType {
+  RESIDENT
+  CONDOMINIUM_EMPLOYEE
+  ADMINISTRATOR_EMPLOYEE
+}
+
+enum entity_type_access_profile_entityType {
+  RESIDENT
+  RESIDENT_OWNER
+  RESIDENT_TENANT
+  CONDOMINIUM_EMPLOYEE
+  ADMINISTRATOR_EMPLOYEE
+}
+
+enum resident_residentType {
+  PROPRIETARIO
+  INQUILINO
+  RESIDENTE
+}
+
+enum staff_document_type {
+  EMAIL
+  MOBILE_NUMBER
+  CPF
+}
+
+enum administration_contacts_typeExternal {
+  condominium
+  administrator
+}
+
+enum position_positionType {
+  LIQUIDATOR
+  SUBLIQUIDATOR
+  ADVISER
+  DOORMAN
+  OTHER
+}
+
+enum resident_residentPersonType {
+  F
+  J
+}
+
+enum entity_type_access_profile_clientId {
+  ahreas
+  superlogica
+}
+
+enum entity_access_profile_clientId {
+  ahreas
+  superlogica
+}
+
+enum person_gruvi_documentOwnerType {
+  RESIDENT
+  STAFF
+}
+
+enum staff_document_clientId {
+  ahreas
+  superlogica
+}
+
+enum position_clientId {
+  ahreas
+  superlogica
+}
+
+enum resident_clientId {
+  ahreas
+  superlogica
+}
+
+enum position_ownerType {
+  CONDOMINIUM
+  ADMINISTRATOR
+}
+
+enum unity_clientId {
+  ahreas
+  superlogica
+}
+
+enum staff_ownerType {
+  CONDOMINIUM
+  ADMINISTRATOR
+}
+
+enum access_clientId {
+  ahreas
+  superlogica
+}
+
+enum condominium_clientId {
+  ahreas
+  superlogica
+}
+
+enum administrator_clientId {
+  ahreas
+  superlogica
+}
